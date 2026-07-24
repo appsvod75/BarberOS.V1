@@ -1,0 +1,8 @@
+
+{
+  "name": "BarberOS Pro v4.0",
+  "description": "Sistema empresarial para barberías con backend Dockerizado, MySQL real y sincronización Multi-tenant.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

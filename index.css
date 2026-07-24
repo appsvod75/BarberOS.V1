@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+:root {
+  font-family: 'Inter', sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* Ocultar scrollbars pero mantener funcionalidad */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* MARQUEE ANIMATION */
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-container {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.marquee-content {
+  display: flex;
+  animation: marquee linear infinite;
+  width: max-content;
+}
+
+@media print {
+
+  /* Ocultamos toda la app (normalmente es #root o #__next) */
+  #root,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Mostramos ÚNICAMENTE el portal que está en el body */
+  .print-area {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: white !important;
+    visibility: visible !important;
+  }
+
+  @page {
+    margin: 0;
+  }
+}

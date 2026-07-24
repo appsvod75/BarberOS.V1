@@ -1,0 +1,30 @@
+
+version: '3.8'
+
+services:
+  # INSTANCIA 1: Barberia "El Rey"
+  barber-rey-api:
+    build:
+      context: ./server
+    container_name: barber-rey-backend
+    restart: always
+    ports:
+      - "3001:3001"
+    environment:
+      - DB_HOST=host.docker.internal # Conecta al MySQL que ya tienes en el Ubuntu
+      - DB_USER=barber_user_rey
+      - DB_PASSWORD=PasswordSeguro123
+      - DB_NAME=barberos_rey_db
+      - PORT=3001
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # INSTANCIA 2: Barberia "Vintage" (Ejemplo de cómo clonar)
+  # barber-vintage-api:
+  #   build: ./server
+  #   container_name: barber-vintage-backend
+  #   ports:
+  #     - "3002:3001"
+  #   environment:
+  #     - DB_NAME=barberos_vintage_db
+  #     ...

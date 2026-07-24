@@ -1,0 +1,97 @@
+GUÍA DE DESPLIEGUE PARA DUMMYS - BARBEROS PRO
+===============================================
+ESTRATEGIA RECOMENDADA: SUBDOMINIOS (ej: cliente1.luckyapps.online)
+
+REQUISITOS PREVIOS (EN EL VPS):
+1. Instalar Node.js y NPM (Ya lo hicimos).
+2. Instalar Nginx y Certbot (Ya lo hicimos).
+3. Tener MySQL funcionando.
+
+---
+
+SECCIÓN 1: ¿QUÉ ARCHIVOS SUBIR Y A DÓNDE? (FILEZILLA)
+------------------------------------------------------
+En tu computadora tienes la carpeta del proyecto. Vamos a dividirla en dos:
+
+1. EL CEREBRO (BACKEND - Carpeta 'server'):
+   - Localmente: Entra a tu proyecto -> busca la carpeta `server` y ábrela.
+   - En el VPS: Crea la carpeta `/var/www/barberos-plataforma/server_one/`
+   - ACCIÓN: Sube TODO lo que está dentro de tu carpeta `server` local (especialmente `package.json` y `server.js`) a la carpeta `server_one` del VPS.
+
+2. LO QUE VE EL CLIENTE (FRONTEND - Carpeta 'dist'):
+   - Localmente: Entra a tu proyecto -> busca la carpeta `dist`.
+   - En el VPS: Crea la carpeta `/var/www/barberos-plataforma/frontend_one/`
+   - ACCIÓN: Sube TODO lo que está dentro de tu carpeta `dist` local (archivos .js, .css, index.html) a la carpeta `frontend_one` del VPS.
+
+---
+
+SECCIÓN 2: PASOS EN LA TERMINAL (SSH)
+--------------------------------------
+Una vez que terminaste de subir TODO por FileZilla, haz esto:
+
+PASO A: Preparar la Base de Datos
+1. Crea la base de datos (si no lo has hecho): 
+   `mysql -u root -p -e "CREATE DATABASE BarberOS_One;"`
+2. Cargar las tablas (el archivo ya debe estar en el VPS dentro de `server_one`):
+   `mysql -u root -p BarberOS_One < /var/www/barberos-plataforma/server_one/schema.sql`
+
+PASO B: Encender el Cerebro (Backend)
+1. Entra a la carpeta:
+   `cd /var/www/barberos-plataforma/server_one`
+2. Descarga las librerías necesarias (ahora sí encontrará el package.json):
+   `npm install`
+3. Instala PM2 globalmente (si no lo has hecho):
+   `npm install -g pm2`
+4. Lanza la aplicación:
+   `PORT=3001 DB_NAME=BarberOS_One DB_USER=root DB_PASSWORD=TU_PASS_ROOT_MYSQL pm2 start server.js --name "api-one"`
+
+---
+
+SECCIÓN 3: CONFIGURAR NGINX (EL PASO FINAL)
+--------------------------------------------
+Esto es para que cuando alguien escriba `one.luckyapps.online` llegue a los archivos que subiste.
+
+1. Crea el archivo:
+   `nano /etc/nginx/sites-available/one.luckyapps.online`
+
+2. Pega este código (Ajustado para el puerto 3001):
+
+   server {
+       server_name one.luckyapps.online;
+       root /var/www/barberos-plataforma/frontend_one;
+       index index.html;
+
+       location / {
+           try_files $uri $uri/ /index.html;
+       }
+
+       location /api/ {
+           proxy_pass http://localhost:3001/api/;
+           proxy_http_version 1.1;
+           proxy_set_header Upgrade $http_upgrade;
+           proxy_set_header Connection 'upgrade';
+           proxy_set_header Host $host;
+           proxy_cache_bypass $http_upgrade;
+       }
+
+       location /socket.io/ {
+           proxy_pass http://localhost:3001;
+           proxy_http_version 1.1;
+           proxy_set_header Upgrade $http_upgrade;
+           proxy_set_header Connection "upgrade";
+       }
+   }
+
+3. Activar y Reiniciar:
+   `ln -s /etc/nginx/sites-available/one.luckyapps.online /etc/nginx/sites-enabled/`
+   `nginx -t`
+   `systemctl restart nginx`
+
+4. Ponerle Candado (HTTPS):
+   `certbot --nginx -d one.luckyapps.online`
+
+---
+RESUMEN DE PUERTOS
+- Instancia 1: Puerto 3001 -> one.luckyapps.online
+- Instancia 2: Puerto 3002 -> dos.luckyapps.online
+
